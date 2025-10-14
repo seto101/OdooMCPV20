@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     server_mode: str = Field(default="http", description="Server mode: http or stdio")
     host: str = Field(default="0.0.0.0", description="Host to bind to (HTTP mode)")
     port: int = Field(default=5000, description="Port to bind to (HTTP mode)")
+    server_url: str = Field(
+        default="",
+        description="Public server URL for OAuth redirects (auto-detected from REPLIT_DOMAINS or use custom)"
+    )
     
     secret_key: str = Field(
         default="dev-secret-key-change-in-production",
@@ -51,6 +55,21 @@ class Settings(BaseSettings):
         if not self.api_keys:
             return []
         return [key.strip() for key in self.api_keys.split(",") if key.strip()]
+    
+    def get_server_url(self) -> str:
+        """Get the public server URL, auto-detecting from Replit if available."""
+        if self.server_url:
+            return self.server_url
+        
+        # Auto-detect from Replit environment
+        replit_domains = os.getenv("REPLIT_DOMAINS")
+        if replit_domains:
+            # REPLIT_DOMAINS format: "domain1.repl.co,domain2.repl.co"
+            primary_domain = replit_domains.split(",")[0].strip()
+            return f"https://{primary_domain}"
+        
+        # Fallback to localhost
+        return f"http://localhost:{self.port}"
 
 
 def get_settings() -> Settings:

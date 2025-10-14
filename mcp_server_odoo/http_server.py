@@ -17,6 +17,7 @@ from .odoo_client import OdooClient
 from .cache import CacheManager
 from .tools import get_tools, handle_tool_call
 from .mcp_tools import mcp
+from .oauth import oauth_manager
 
 logger = structlog.get_logger()
 
@@ -31,6 +32,16 @@ class TokenResponse(BaseModel):
     """Token response model."""
     access_token: str
     token_type: str = "bearer"
+
+
+class OAuthTokenRequest(BaseModel):
+    """OAuth token request model."""
+    grant_type: str
+    code: Optional[str] = None
+    redirect_uri: Optional[str] = None
+    client_id: Optional[str] = None
+    client_secret: Optional[str] = None
+    refresh_token: Optional[str] = None
 
 
 class ToolCallRequest(BaseModel):
@@ -71,7 +82,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    auth_manager = AuthManager(settings)
+    auth_manager = AuthManager(settings, oauth_manager=oauth_manager)
     cache_manager = CacheManager(ttl=settings.cache_ttl)
     odoo_client = OdooClient(settings, cache_manager)
     
@@ -161,6 +172,137 @@ def create_app() -> FastAPI:
         logger.info("login_successful", username=request.username, odoo_uid=uid)
         
         return TokenResponse(access_token=access_token)
+    
+    @app.get("/oauth/authorize")
+    async def oauth_authorize(
+        response_type: str,
+        client_id: str,
+        redirect_uri: str,
+        state: Optional[str] = None,
+        scope: Optional[str] = None
+    ):
+        """
+        OAuth 2.0 authorization endpoint.
+        
+        For ChatGPT and other OAuth clients.
+        This is a simplified flow - in production, show a consent screen.
+        """
+        logger.info(
+            "oauth_authorize_request",
+            client_id=client_id,
+            redirect_uri=redirect_uri,
+            response_type=response_type
+        )
+        
+        if response_type != "code":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only 'code' response_type is supported"
+            )
+        
+        try:
+            # Generate authorization code
+            code = oauth_manager.generate_authorization_code(
+                client_id=client_id,
+                redirect_uri=redirect_uri,
+                state=state,
+                scope=scope
+            )
+            
+            # Redirect back to client with code
+            redirect_url = f"{redirect_uri}?code={code}"
+            if state:
+                redirect_url += f"&state={state}"
+            
+            logger.info("oauth_authorize_success", redirect_uri=redirect_uri)
+            
+            return RedirectResponse(url=redirect_url)
+            
+        except ValueError as e:
+            logger.error("oauth_authorize_error", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+    
+    @app.post("/oauth/token")
+    async def oauth_token(request: OAuthTokenRequest):
+        """
+        OAuth 2.0 token endpoint.
+        
+        Exchange authorization code for access token or refresh an existing token.
+        """
+        logger.info("oauth_token_request", grant_type=request.grant_type)
+        
+        try:
+            if request.grant_type == "authorization_code":
+                # Exchange code for token
+                if not all([request.code, request.client_id, request.client_secret, request.redirect_uri]):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Missing required parameters for authorization_code grant"
+                    )
+                
+                token_data = oauth_manager.exchange_code_for_token(
+                    code=request.code,
+                    client_id=request.client_id,
+                    client_secret=request.client_secret,
+                    redirect_uri=request.redirect_uri
+                )
+                
+                logger.info("oauth_token_issued", client_id=request.client_id)
+                return token_data
+                
+            elif request.grant_type == "refresh_token":
+                # Refresh token
+                if not all([request.refresh_token, request.client_id, request.client_secret]):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Missing required parameters for refresh_token grant"
+                    )
+                
+                token_data = oauth_manager.refresh_access_token(
+                    refresh_token=request.refresh_token,
+                    client_id=request.client_id,
+                    client_secret=request.client_secret
+                )
+                
+                logger.info("oauth_token_refreshed", client_id=request.client_id)
+                return token_data
+                
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Unsupported grant_type: {request.grant_type}"
+                )
+                
+        except ValueError as e:
+            logger.error("oauth_token_error", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+    
+    @app.get("/oauth/credentials")
+    async def oauth_credentials():
+        """
+        Get OAuth client credentials for setup.
+        
+        This endpoint is for initial configuration only.
+        In production, protect this endpoint or remove it.
+        """
+        credentials = oauth_manager.get_client_credentials()
+        server_url = settings.get_server_url()
+        
+        logger.info("oauth_credentials_retrieved", server_url=server_url)
+        
+        return {
+            **credentials,
+            "authorization_url": f"{server_url}/oauth/authorize",
+            "token_url": f"{server_url}/oauth/token",
+            "scopes": ["odoo:read", "odoo:write"],
+            "note": "Use these credentials to configure ChatGPT or other OAuth clients"
+        }
     
     @app.get("/tools", response_model=ToolListResponse)
     async def list_tools(auth: dict = Depends(auth_manager.verify_request)):

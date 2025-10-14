@@ -1,7 +1,7 @@
 """Authentication and authorization for HTTP mode."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, Security, status
@@ -9,6 +9,9 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import structlog
 
 from .config import Settings
+
+if TYPE_CHECKING:
+    from .oauth import OAuthManager
 
 logger = structlog.get_logger()
 
@@ -19,9 +22,10 @@ security = HTTPBearer()
 class AuthManager:
     """Manages authentication and authorization."""
     
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, oauth_manager: Optional['OAuthManager'] = None):
         self.settings = settings
         self.valid_api_keys = set(settings.get_api_keys())
+        self.oauth_manager = oauth_manager
     
     def verify_api_key(self, api_key: str) -> bool:
         """Verify if the API key is valid."""
@@ -71,13 +75,20 @@ class AuthManager:
         self,
         credentials: HTTPAuthorizationCredentials = Security(security)
     ) -> dict:
-        """Verify request authentication (API key or JWT token)."""
+        """Verify request authentication (API key, JWT token, or OAuth token)."""
         token = credentials.credentials
         
+        # Try API key first
         if self.verify_api_key(token):
             logger.info("api_key_authenticated")
             return {"auth_type": "api_key", "key": token}
         
+        # Try OAuth token if oauth_manager is available
+        if self.oauth_manager and self.oauth_manager.validate_token(token):
+            logger.info("oauth_authenticated", token=token[:10] + "...")
+            return {"auth_type": "oauth", "token": token}
+        
+        # Try JWT token
         try:
             payload = self.verify_token(token)
             logger.info("jwt_authenticated", subject=payload.get("sub"))
