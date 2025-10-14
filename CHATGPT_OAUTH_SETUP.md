@@ -65,6 +65,8 @@ El `client_secret` se genera automáticamente al iniciar el servidor. Si necesit
    - **Authorization URL**: `https://[tu-dominio].repl.co/oauth/authorize`
    - **Token URL**: `https://[tu-dominio].repl.co/oauth/token`
    - **Scopes**: `odoo:read odoo:write`
+   
+   📝 **Nota**: El servidor soporta HTTP Basic Auth (usado por ChatGPT) y form-encoded credentials.
 
 4. **Guarda el conector**
 
@@ -345,16 +347,10 @@ curl https://[dominio].repl.co/oauth/credentials
 # 3. Simular autorización
 curl "https://[dominio].repl.co/oauth/authorize?response_type=code&client_id=chatgpt-odoo-mcp&redirect_uri=https://chatgpt.com/oauth/callback"
 
-# 4. Intercambiar código por token
+# 4. Intercambiar código por token (usando form-urlencoded según OAuth 2.0 spec)
 curl -X POST https://[dominio].repl.co/oauth/token \
-  -H "Content-Type: application/json" \
-  -d '{
-    "grant_type": "authorization_code",
-    "code": "[codigo-del-paso-3]",
-    "client_id": "chatgpt-odoo-mcp",
-    "client_secret": "[tu-secret]",
-    "redirect_uri": "https://chatgpt.com/oauth/callback"
-  }'
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code&code=[codigo-del-paso-3]&client_id=chatgpt-odoo-mcp&client_secret=[tu-secret]&redirect_uri=https://chatgpt.com/oauth/callback"
 
 # 5. Usar token para llamar MCP
 curl https://[dominio].repl.co/mcp/ \

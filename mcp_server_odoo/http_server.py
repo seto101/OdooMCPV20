@@ -2,9 +2,10 @@
 
 from datetime import timedelta
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, status, Request
+from fastapi import FastAPI, HTTPException, Depends, status, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
@@ -85,6 +86,7 @@ def create_app() -> FastAPI:
     auth_manager = AuthManager(settings, oauth_manager=oauth_manager)
     cache_manager = CacheManager(ttl=settings.cache_ttl)
     odoo_client = OdooClient(settings, cache_manager)
+    basic_security = HTTPBasic(auto_error=False)
     
     @app.get("/")
     async def root():
@@ -226,65 +228,84 @@ def create_app() -> FastAPI:
             )
     
     @app.post("/oauth/token")
-    async def oauth_token(request: OAuthTokenRequest):
+    async def oauth_token(
+        grant_type: str = Form(...),
+        code: Optional[str] = Form(None),
+        redirect_uri: Optional[str] = Form(None),
+        client_id: Optional[str] = Form(None),
+        client_secret: Optional[str] = Form(None),
+        refresh_token: Optional[str] = Form(None),
+        basic_credentials: Optional[HTTPBasicCredentials] = Depends(basic_security)
+    ):
         """
-        OAuth 2.0 token endpoint.
+        OAuth 2.0 token endpoint (RFC 6749).
         
+        Accepts application/x-www-form-urlencoded as per OAuth 2.0 spec.
+        Supports HTTP Basic Auth for client credentials (preferred by ChatGPT) or form parameters.
         Exchange authorization code for access token or refresh an existing token.
         """
-        logger.info("oauth_token_request", grant_type=request.grant_type)
+        # Extract client credentials from HTTP Basic Auth if present, otherwise use form data
+        final_client_id = client_id
+        final_client_secret = client_secret
+        
+        if basic_credentials:
+            final_client_id = basic_credentials.username
+            final_client_secret = basic_credentials.password
+            logger.info("oauth_token_request_basic_auth", grant_type=grant_type, client_id=final_client_id)
+        else:
+            logger.info("oauth_token_request_form", grant_type=grant_type, client_id=final_client_id)
         
         try:
-            if request.grant_type == "authorization_code":
+            if grant_type == "authorization_code":
                 # Exchange code for token
-                if not all([request.code, request.client_id, request.client_secret, request.redirect_uri]):
+                if not all([code, final_client_id, final_client_secret, redirect_uri]):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Missing required parameters for authorization_code grant"
                     )
                 
                 # Type assertions after validation
-                assert request.code is not None
-                assert request.client_id is not None
-                assert request.client_secret is not None
-                assert request.redirect_uri is not None
+                assert code is not None
+                assert final_client_id is not None
+                assert final_client_secret is not None
+                assert redirect_uri is not None
                 
                 token_data = oauth_manager.exchange_code_for_token(
-                    code=request.code,
-                    client_id=request.client_id,
-                    client_secret=request.client_secret,
-                    redirect_uri=request.redirect_uri
+                    code=code,
+                    client_id=final_client_id,
+                    client_secret=final_client_secret,
+                    redirect_uri=redirect_uri
                 )
                 
-                logger.info("oauth_token_issued", client_id=request.client_id)
+                logger.info("oauth_token_issued", client_id=final_client_id)
                 return token_data
                 
-            elif request.grant_type == "refresh_token":
+            elif grant_type == "refresh_token":
                 # Refresh token
-                if not all([request.refresh_token, request.client_id, request.client_secret]):
+                if not all([refresh_token, final_client_id, final_client_secret]):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Missing required parameters for refresh_token grant"
                     )
                 
                 # Type assertions after validation
-                assert request.refresh_token is not None
-                assert request.client_id is not None
-                assert request.client_secret is not None
+                assert refresh_token is not None
+                assert final_client_id is not None
+                assert final_client_secret is not None
                 
                 token_data = oauth_manager.refresh_access_token(
-                    refresh_token=request.refresh_token,
-                    client_id=request.client_id,
-                    client_secret=request.client_secret
+                    refresh_token=refresh_token,
+                    client_id=final_client_id,
+                    client_secret=final_client_secret
                 )
                 
-                logger.info("oauth_token_refreshed", client_id=request.client_id)
+                logger.info("oauth_token_refreshed", client_id=final_client_id)
                 return token_data
                 
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Unsupported grant_type: {request.grant_type}"
+                    detail=f"Unsupported grant_type: {grant_type}"
                 )
                 
         except ValueError as e:
