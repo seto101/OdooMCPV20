@@ -9,7 +9,11 @@ Un servidor Model Context Protocol (MCP) híbrido mejorado que permite a asisten
 1. **🔐 Autenticación Robusta**
    - API Keys para acceso directo (configuradas en variables de entorno)
    - JWT Tokens para sesiones seguras (validadas contra credenciales de Odoo)
-   - **OAuth 2.0 completo** para ChatGPT (authorization code + refresh tokens)
+   - **OAuth 2.0 RFC 6749 completo** para ChatGPT:
+     - Authorization Code Flow con Refresh Tokens
+     - HTTP Basic Auth para credenciales de cliente (compatible ChatGPT)
+     - Form-encoded credentials como fallback
+     - Auto-detección de URL pública desde Replit
    - Sistema de autenticación multi-método con validación real
 
 2. **🤖 Optimizado para LLMs**

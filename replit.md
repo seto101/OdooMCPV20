@@ -120,7 +120,11 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 
 - ✅ Estructura del proyecto creada
 - ✅ Sistema de autenticación multi-método (API Keys, JWT, OAuth 2.0)
-- ✅ **OAuth 2.0 completo para ChatGPT** - Authorization code flow + refresh tokens
+- ✅ **OAuth 2.0 RFC 6749 completo para ChatGPT**:
+  - ✅ Authorization Code Flow con Refresh Tokens
+  - ✅ HTTP Basic Auth para credenciales de cliente (estándar ChatGPT)
+  - ✅ Form-encoded credentials (RFC 6749)
+  - ✅ Auto-detección de URL pública desde Replit
 - ✅ Cliente Odoo mejorado
 - ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI
