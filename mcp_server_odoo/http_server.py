@@ -243,6 +243,12 @@ def create_app() -> FastAPI:
                         detail="Missing required parameters for authorization_code grant"
                     )
                 
+                # Type assertions after validation
+                assert request.code is not None
+                assert request.client_id is not None
+                assert request.client_secret is not None
+                assert request.redirect_uri is not None
+                
                 token_data = oauth_manager.exchange_code_for_token(
                     code=request.code,
                     client_id=request.client_id,
@@ -260,6 +266,11 @@ def create_app() -> FastAPI:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Missing required parameters for refresh_token grant"
                     )
+                
+                # Type assertions after validation
+                assert request.refresh_token is not None
+                assert request.client_id is not None
+                assert request.client_secret is not None
                 
                 token_data = oauth_manager.refresh_access_token(
                     refresh_token=request.refresh_token,

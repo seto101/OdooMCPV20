@@ -84,6 +84,9 @@ Endpoints disponibles:
 - `GET /health` - Health check
 - `GET /docs` - Documentación Swagger
 - `POST /login` - Obtener JWT
+- `GET /oauth/authorize` - **OAuth 2.0 Autorización** (para ChatGPT)
+- `POST /oauth/token` - **OAuth 2.0 Token Exchange** (para ChatGPT)
+- `GET /oauth/credentials` - Obtener credenciales OAuth para configuración
 - `GET /tools` - Listar herramientas REST
 - `POST /call_tool` - Ejecutar herramienta REST
 - `POST /webhook/n8n` - Webhook REST para N8N
@@ -98,6 +101,17 @@ Endpoints disponibles:
 
 Ver [N8N_SETUP.md](./N8N_SETUP.md) para instrucciones detalladas.
 
+### Integración con ChatGPT
+
+**Configuración de OAuth en ChatGPT:**
+1. Obtén credenciales: `GET https://tu-dominio.repl.co/oauth/credentials`
+2. Crea conector personalizado en ChatGPT
+3. Configura OAuth con las credenciales obtenidas
+4. Authorization URL: `https://tu-dominio.repl.co/oauth/authorize`
+5. Token URL: `https://tu-dominio.repl.co/oauth/token`
+
+Ver [CHATGPT_OAUTH_SETUP.md](./CHATGPT_OAUTH_SETUP.md) para instrucciones paso a paso.
+
 ### Modo stdio
 
 Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
@@ -105,7 +119,8 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 ## Estado Actual
 
 - ✅ Estructura del proyecto creada
-- ✅ Sistema de autenticación implementado y corregido
+- ✅ Sistema de autenticación multi-método (API Keys, JWT, OAuth 2.0)
+- ✅ **OAuth 2.0 completo para ChatGPT** - Authorization code flow + refresh tokens
 - ✅ Cliente Odoo mejorado
 - ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI
@@ -115,7 +130,7 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 - ✅ Servidor stdio
 - ✅ Sistema de caché
 - ✅ Logging estructurado
-- ✅ Documentación completa + guía N8N + prompts maestros
+- ✅ Documentación completa + guía N8N + guía ChatGPT OAuth + prompts maestros
 
 ## Próximos Pasos Sugeridos
 
