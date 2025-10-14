@@ -26,7 +26,23 @@ def get_odoo_client():
 async def odoo_search_records(
     model: Annotated[str, Field(description="The Odoo model name (e.g., 'res.partner', 'sale.order')")],
     domain: Annotated[list, Field(
-        description="Search criteria as list of lists (Odoo domain). Examples: [['name', 'ilike', 'John']], [['email', '=', 'test@example.com']], or [] for all records. Each filter is a list with [field, operator, value]"
+        description="Search criteria as list of lists (Odoo domain). Examples: [['name', 'ilike', 'John']], [['id', 'in', [1,2,3]]], or [] for all records. Each filter is a list with [field, operator, value]",
+        json_schema_extra={
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "number"},
+                        {"type": "boolean"},
+                        {"type": "null"},
+                        {"type": "array"},
+                        {"type": "object"}
+                    ]
+                }
+            }
+        }
     )] = [],
     limit: Annotated[int, Field(description="Maximum records to return")] = 10,
     offset: Annotated[int, Field(description="Skip this many records for pagination")] = 0,
@@ -113,7 +129,25 @@ async def odoo_read_records(
 @mcp.tool()
 async def odoo_search_read_records(
     model: Annotated[str, Field(description="The Odoo model name")],
-    domain: Annotated[list, Field(description="Search criteria as list of lists (Odoo domain). Same format as odoo_search_records")] = [],
+    domain: Annotated[list, Field(
+        description="Search criteria as list of lists (Odoo domain). Same format as odoo_search_records. Supports complex filters like [['id', 'in', [1,2,3]]]",
+        json_schema_extra={
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "number"},
+                        {"type": "boolean"},
+                        {"type": "null"},
+                        {"type": "array"},
+                        {"type": "object"}
+                    ]
+                }
+            }
+        }
+    )] = [],
     fields: Annotated[list[str] | None, Field(description="Fields to retrieve in results")] = None,
     limit: Annotated[int, Field(description="Maximum records")] = 10,
     offset: Annotated[int, Field(description="Records to skip")] = 0,

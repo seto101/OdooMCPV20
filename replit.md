@@ -110,7 +110,8 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 - ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI
 - ✅ **MCP HTTP Streamable en /mcp (soporte completo para N8N)**
-- ✅ **Schemas JSON corregidos (sin error "array schema missing items")**
+- ✅ **Schemas JSON corregidos con `json_schema_extra`** - Soluciona error "array schema missing items"
+- ✅ **Soporte completo para filtros Odoo complejos** - Incluyendo `['id', 'in', [1,2,3]]`
 - ✅ Servidor stdio
 - ✅ Sistema de caché
 - ✅ Logging estructurado
