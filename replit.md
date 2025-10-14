@@ -84,6 +84,8 @@ Endpoints disponibles:
 - `GET /health` - Health check
 - `GET /docs` - Documentación Swagger
 - `POST /login` - Obtener JWT
+- `GET /.well-known/oauth-authorization-server` - **OAuth Discovery (RFC 8414)**
+- `GET /.well-known/oauth-protected-resource` - **Resource Discovery (RFC 9728)**
 - `GET /oauth/authorize` - **OAuth 2.0 Autorización** (para ChatGPT)
 - `POST /oauth/token` - **OAuth 2.0 Token Exchange** (para ChatGPT)
 - `GET /oauth/credentials` - Obtener credenciales OAuth para configuración

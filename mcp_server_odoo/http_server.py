@@ -315,6 +315,42 @@ def create_app() -> FastAPI:
                 detail=str(e)
             )
     
+    @app.get("/.well-known/oauth-authorization-server")
+    async def oauth_authorization_server_metadata():
+        """
+        OAuth 2.0 Authorization Server Metadata (RFC 8414).
+        
+        Provides discovery information for OAuth clients like ChatGPT.
+        """
+        server_url = settings.get_server_url()
+        
+        return {
+            "issuer": server_url,
+            "authorization_endpoint": f"{server_url}/oauth/authorize",
+            "token_endpoint": f"{server_url}/oauth/token",
+            "response_types_supported": ["code"],
+            "grant_types_supported": ["authorization_code", "refresh_token"],
+            "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"],
+            "scopes_supported": ["odoo:read", "odoo:write"],
+            "code_challenge_methods_supported": ["plain", "S256"]
+        }
+    
+    @app.get("/.well-known/oauth-protected-resource")
+    async def oauth_protected_resource_metadata():
+        """
+        OAuth 2.0 Protected Resource Metadata (RFC 9728).
+        
+        Indicates that this resource server uses OAuth for authentication.
+        """
+        server_url = settings.get_server_url()
+        
+        return {
+            "resource": server_url,
+            "authorization_servers": [server_url],
+            "scopes_supported": ["odoo:read", "odoo:write"],
+            "bearer_methods_supported": ["header"]
+        }
+    
     @app.get("/oauth/credentials")
     async def oauth_credentials():
         """

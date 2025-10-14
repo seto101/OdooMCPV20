@@ -8,6 +8,15 @@ Esta guía te muestra cómo configurar el servidor MCP Odoo con autenticación O
 - Cuenta de ChatGPT Plus o Team (con acceso a conectores personalizados)
 - URL pública del servidor (auto-detectada en Replit)
 
+## ✨ Descubrimiento Automático OAuth
+
+El servidor implementa **OAuth 2.0 Discovery** estándar (RFC 8414 y RFC 9728):
+
+- **`/.well-known/oauth-authorization-server`** - Metadata del servidor OAuth
+- **`/.well-known/oauth-protected-resource`** - Metadata del recurso MCP
+
+ChatGPT detecta automáticamente estos endpoints y configura la autenticación sin necesidad de ingresar manualmente las URLs de autorización y token.
+
 ---
 
 ## 🚀 Paso 1: Obtener Credenciales OAuth
@@ -62,11 +71,13 @@ El `client_secret` se genera automáticamente al iniciar el servidor. Si necesit
    - Tipo: `OAuth`
    - **Client ID**: `chatgpt-odoo-mcp` (del paso 1)
    - **Client Secret**: `[tu-client-secret]` (del paso 1)
-   - **Authorization URL**: `https://[tu-dominio].repl.co/oauth/authorize`
-   - **Token URL**: `https://[tu-dominio].repl.co/oauth/token`
+   - **Authorization URL**: `https://[tu-dominio].repl.co/oauth/authorize` *(o déjalo vacío para descubrimiento automático)*
+   - **Token URL**: `https://[tu-dominio].repl.co/oauth/token` *(o déjalo vacío para descubrimiento automático)*
    - **Scopes**: `odoo:read odoo:write`
    
-   📝 **Nota**: El servidor soporta HTTP Basic Auth (usado por ChatGPT) y form-encoded credentials.
+   📝 **Notas**: 
+   - El servidor soporta HTTP Basic Auth (usado por ChatGPT) y form-encoded credentials
+   - Si dejas las URLs vacías, ChatGPT las descubrirá automáticamente desde `/.well-known/oauth-authorization-server`
 
 4. **Guarda el conector**
 

@@ -123,6 +123,11 @@ python -m mcp_server_odoo
 - `GET /health` - Health check
 - `GET /docs` - Documentación Swagger interactiva
 - `POST /login` - Obtener JWT token
+- `GET /.well-known/oauth-authorization-server` - OAuth Discovery (RFC 8414)
+- `GET /.well-known/oauth-protected-resource` - Resource Discovery (RFC 9728)
+- `GET /oauth/authorize` - OAuth authorization endpoint
+- `POST /oauth/token` - OAuth token endpoint
+- `GET /oauth/credentials` - Obtener credenciales OAuth para configuración
 - `GET /tools` - Listar herramientas disponibles
 - `POST /call_tool` - Ejecutar una herramienta
 - `POST /webhook/n8n` - Endpoint específico para N8N
