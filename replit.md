@@ -107,13 +107,14 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 - ✅ Estructura del proyecto creada
 - ✅ Sistema de autenticación implementado y corregido
 - ✅ Cliente Odoo mejorado
-- ✅ 7 herramientas MCP optimizadas con FastMCP
+- ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI
 - ✅ **MCP HTTP Streamable en /mcp (soporte completo para N8N)**
+- ✅ **Schemas JSON corregidos (sin error "array schema missing items")**
 - ✅ Servidor stdio
 - ✅ Sistema de caché
 - ✅ Logging estructurado
-- ✅ Documentación completa + guía N8N
+- ✅ Documentación completa + guía N8N + prompts maestros
 
 ## Próximos Pasos Sugeridos
 
