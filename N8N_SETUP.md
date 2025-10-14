@@ -22,9 +22,11 @@ https://tu-subdominio.ngrok-free.app/mcp
 | Campo | Valor |
 |-------|-------|
 | **Server Transport** | `HTTP Streamable` |
-| **Endpoint** | `https://tu-dominio.repl.co/mcp` |
+| **Endpoint** | `https://tu-dominio.repl.co/mcp/` (nota la `/` al final) |
 | **Authentication** | `Bearer Auth` |
 | **Bearer Token** | Tu API key (ej: `test_key_123`) o JWT token |
+
+**Nota importante**: Asegúrate de incluir la barra final `/` en la URL del endpoint. El servidor MCP requiere `/mcp/` para funcionar correctamente.
 
 ### 3. Opciones de autenticación
 

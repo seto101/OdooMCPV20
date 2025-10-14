@@ -2,10 +2,12 @@
 
 from datetime import timedelta
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response, RedirectResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 import structlog
 import uvicorn
 
@@ -47,12 +49,18 @@ def create_app() -> FastAPI:
     
     settings = get_settings()
     
+    # Create MCP ASGI app with internal path="/" 
+    # When mounted at "/mcp", the endpoint will be "/mcp/"
+    mcp_asgi_app = mcp.http_app(path="/")
+    
+    # Create FastAPI app with MCP lifespan (CRITICAL for MCP to work)
     app = FastAPI(
         title="Odoo MCP Server",
         description="Enhanced MCP server for Odoo with API authentication",
         version="2.0.0",
         docs_url="/docs",
-        redoc_url="/redoc"
+        redoc_url="/redoc",
+        lifespan=mcp_asgi_app.lifespan
     )
     
     app.add_middleware(
@@ -66,9 +74,6 @@ def create_app() -> FastAPI:
     auth_manager = AuthManager(settings)
     cache_manager = CacheManager(ttl=settings.cache_ttl)
     odoo_client = OdooClient(settings, cache_manager)
-    
-    app.mount("/mcp", mcp.http_app())
-    logger.info("mcp_streamable_http_mounted", path="/mcp")
     
     @app.get("/")
     async def root():
@@ -270,6 +275,18 @@ def create_app() -> FastAPI:
     async def shutdown_event():
         """Run on application shutdown."""
         logger.info("http_server_shutting_down")
+    
+    # Add explicit handler for /mcp without trailing slash
+    # Redirect to /mcp/ with 308 (Permanent Redirect that preserves method)
+    @app.api_route("/mcp", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], include_in_schema=False)
+    async def mcp_redirect():
+        """Redirect /mcp to /mcp/ preserving the request method."""
+        return RedirectResponse(url="/mcp/", status_code=308)
+    
+    # Mount MCP app AFTER explicit redirect route
+    # The MCP endpoint will be at /mcp/
+    app.mount("/mcp", mcp_asgi_app)
+    logger.info("mcp_http_endpoint_ready", paths=["/mcp (redirects to /mcp/)", "/mcp/"])
     
     return app
 

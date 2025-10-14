@@ -172,10 +172,12 @@ curl -X POST http://localhost:5000/call_tool \
 1. Agregar nodo "MCP" en N8N
 2. Configurar:
    - **Server Transport**: `HTTP Streamable`
-   - **Endpoint**: `https://tu-dominio.repl.co/mcp`
+   - **Endpoint**: `https://tu-dominio.repl.co/mcp/` (incluir `/` final)
    - **Authentication**: `Bearer Auth`
    - **Bearer Token**: Tu API key (ej: `test_key_123`) o JWT token
 3. N8N mostrará las 7 herramientas de Odoo disponibles automáticamente
+
+**Nota**: Es importante incluir la barra final `/` en la URL del endpoint MCP.
 
 **Método 2: Usar HTTP Request (Alternativo)**
 

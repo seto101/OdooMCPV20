@@ -92,7 +92,7 @@ Endpoints disponibles:
 
 **Configuración del nodo MCP en N8N:**
 1. Server Transport: `HTTP Streamable`
-2. Endpoint: `https://tu-dominio.repl.co/mcp`
+2. Endpoint: `https://tu-dominio.repl.co/mcp/` (incluir `/` al final)
 3. Authentication: `Bearer Auth`
 4. Token: API key (ej: `test_key_123`) o JWT
 
