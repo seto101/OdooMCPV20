@@ -14,6 +14,7 @@ from .auth import AuthManager
 from .odoo_client import OdooClient
 from .cache import CacheManager
 from .tools import get_tools, handle_tool_call
+from .mcp_tools import mcp
 
 logger = structlog.get_logger()
 
@@ -66,6 +67,9 @@ def create_app() -> FastAPI:
     cache_manager = CacheManager(ttl=settings.cache_ttl)
     odoo_client = OdooClient(settings, cache_manager)
     
+    app.mount("/mcp", mcp.http_app())
+    logger.info("mcp_streamable_http_mounted", path="/mcp")
+    
     @app.get("/")
     async def root():
         """Root endpoint."""
@@ -74,10 +78,17 @@ def create_app() -> FastAPI:
             "version": "2.0.0",
             "status": "running",
             "endpoints": {
+                "mcp_streamable": "/mcp (POST - for N8N MCP node)",
                 "docs": "/docs",
                 "tools": "/tools",
                 "call_tool": "/call_tool",
-                "login": "/login"
+                "login": "/login",
+                "webhook_n8n": "/webhook/n8n"
+            },
+            "n8n_connection": {
+                "transport": "HTTP Streamable",
+                "endpoint": "/mcp",
+                "authentication": "Bearer token (use API_KEYS from env or JWT from /login)"
             }
         }
     

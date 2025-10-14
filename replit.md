@@ -79,13 +79,24 @@ python -m mcp_server_odoo
 ```
 
 Endpoints disponibles:
+- `POST /mcp` - **MCP HTTP Streamable** (para N8N con nodo MCP)
 - `GET /` - Info del servidor
 - `GET /health` - Health check
 - `GET /docs` - Documentación Swagger
 - `POST /login` - Obtener JWT
-- `GET /tools` - Listar herramientas
-- `POST /call_tool` - Ejecutar herramienta
-- `POST /webhook/n8n` - Webhook para N8N
+- `GET /tools` - Listar herramientas REST
+- `POST /call_tool` - Ejecutar herramienta REST
+- `POST /webhook/n8n` - Webhook REST para N8N
+
+### Integración con N8N
+
+**Configuración del nodo MCP en N8N:**
+1. Server Transport: `HTTP Streamable`
+2. Endpoint: `https://tu-dominio.repl.co/mcp`
+3. Authentication: `Bearer Auth`
+4. Token: API key (ej: `test_key_123`) o JWT
+
+Ver [N8N_SETUP.md](./N8N_SETUP.md) para instrucciones detalladas.
 
 ### Modo stdio
 
@@ -94,14 +105,15 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
 ## Estado Actual
 
 - ✅ Estructura del proyecto creada
-- ✅ Sistema de autenticación implementado
+- ✅ Sistema de autenticación implementado y corregido
 - ✅ Cliente Odoo mejorado
-- ✅ 7 herramientas MCP optimizadas
+- ✅ 7 herramientas MCP optimizadas con FastMCP
 - ✅ Servidor HTTP con FastAPI
+- ✅ **MCP HTTP Streamable en /mcp (soporte completo para N8N)**
 - ✅ Servidor stdio
 - ✅ Sistema de caché
 - ✅ Logging estructurado
-- ✅ Documentación completa
+- ✅ Documentación completa + guía N8N
 
 ## Próximos Pasos Sugeridos
 

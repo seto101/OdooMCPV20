@@ -167,13 +167,27 @@ curl -X POST http://localhost:5000/call_tool \
 
 #### Integración con N8N
 
+**Método 1: Usar el nodo MCP (Recomendado)**
+
+1. Agregar nodo "MCP" en N8N
+2. Configurar:
+   - **Server Transport**: `HTTP Streamable`
+   - **Endpoint**: `https://tu-dominio.repl.co/mcp`
+   - **Authentication**: `Bearer Auth`
+   - **Bearer Token**: Tu API key (ej: `test_key_123`) o JWT token
+3. N8N mostrará las 7 herramientas de Odoo disponibles automáticamente
+
+**Método 2: Usar HTTP Request (Alternativo)**
+
 1. Agregar nodo "HTTP Request"
 2. Configurar:
    - **Method**: POST
-   - **URL**: `http://tu-servidor:5000/webhook/n8n`
+   - **URL**: `https://tu-servidor:5000/webhook/n8n`
    - **Authentication**: Bearer Token
    - **Token**: Tu API key
    - **Body**: JSON con `tool` y `arguments`
+
+Ver [N8N_SETUP.md](./N8N_SETUP.md) para instrucciones detalladas.
 
 ### Modo 2: stdio (para Claude Desktop)
 
