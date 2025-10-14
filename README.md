@@ -191,6 +191,8 @@ curl -X POST http://localhost:5000/call_tool \
 
 Ver [N8N_SETUP.md](./N8N_SETUP.md) para instrucciones detalladas.
 
+**⚠️ Importante - Corrección de Schema:** Si ves el error "array schema missing items", consulta [SCHEMA_FIX.md](./SCHEMA_FIX.md) para la solución.
+
 ### Modo 2: stdio (para Claude Desktop)
 
 Ideal para usar con Claude Desktop en tu computadora local.

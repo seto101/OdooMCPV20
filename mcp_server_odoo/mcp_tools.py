@@ -25,8 +25,8 @@ def get_odoo_client():
 @mcp.tool()
 async def odoo_search_records(
     model: Annotated[str, Field(description="The Odoo model name (e.g., 'res.partner', 'sale.order')")],
-    domain: Annotated[list[list[Any]], Field(
-        description="Search criteria as list of tuples. Examples: [['name', 'ilike', 'John']], [['email', '=', 'test@example.com']], or [] for all records"
+    domain: Annotated[list, Field(
+        description="Search criteria as list of lists (Odoo domain). Examples: [['name', 'ilike', 'John']], [['email', '=', 'test@example.com']], or [] for all records. Each filter is a list with [field, operator, value]"
     )] = [],
     limit: Annotated[int, Field(description="Maximum records to return")] = 10,
     offset: Annotated[int, Field(description="Skip this many records for pagination")] = 0,
@@ -113,7 +113,7 @@ async def odoo_read_records(
 @mcp.tool()
 async def odoo_search_read_records(
     model: Annotated[str, Field(description="The Odoo model name")],
-    domain: Annotated[list[list[Any]], Field(description="Search criteria (same format as odoo_search_records)")] = [],
+    domain: Annotated[list, Field(description="Search criteria as list of lists (Odoo domain). Same format as odoo_search_records")] = [],
     fields: Annotated[list[str] | None, Field(description="Fields to retrieve in results")] = None,
     limit: Annotated[int, Field(description="Maximum records")] = 10,
     offset: Annotated[int, Field(description="Records to skip")] = 0,
