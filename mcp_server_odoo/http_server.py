@@ -328,9 +328,10 @@ def create_app() -> FastAPI:
             "issuer": server_url,
             "authorization_endpoint": f"{server_url}/oauth/authorize",
             "token_endpoint": f"{server_url}/oauth/token",
+            "registration_endpoint": f"{server_url}/oauth/register",
             "response_types_supported": ["code"],
             "grant_types_supported": ["authorization_code", "refresh_token"],
-            "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"],
+            "token_endpoint_auth_methods_supported": ["none", "client_secret_basic", "client_secret_post"],
             "scopes_supported": ["odoo:read", "odoo:write"],
             "code_challenge_methods_supported": ["plain", "S256"]
         }
@@ -350,6 +351,56 @@ def create_app() -> FastAPI:
             "scopes_supported": ["odoo:read", "odoo:write"],
             "bearer_methods_supported": ["header"]
         }
+    
+    @app.post("/oauth/register")
+    async def oauth_register(request: Request):
+        """
+        OAuth 2.0 Dynamic Client Registration (RFC 7591).
+        
+        Allows OAuth clients like ChatGPT to register dynamically without pre-configuration.
+        """
+        try:
+            body = await request.json()
+            
+            # Extraer parámetros del registro
+            client_name = body.get("client_name", "Unknown Client")
+            redirect_uris = body.get("redirect_uris", [])
+            grant_types = body.get("grant_types")
+            response_types = body.get("response_types")
+            token_endpoint_auth_method = body.get("token_endpoint_auth_method", "client_secret_basic")
+            scope = body.get("scope")
+            
+            # Validar redirect_uris
+            if not redirect_uris:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="redirect_uris is required"
+                )
+            
+            # Registrar cliente
+            client_data = oauth_manager.register_client(
+                client_name=client_name,
+                redirect_uris=redirect_uris,
+                grant_types=grant_types,
+                response_types=response_types,
+                token_endpoint_auth_method=token_endpoint_auth_method,
+                scope=scope
+            )
+            
+            logger.info(
+                "client_registered_via_api",
+                client_id=client_data["client_id"],
+                client_name=client_name
+            )
+            
+            return client_data
+            
+        except ValueError as e:
+            logger.error("client_registration_error", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
     
     @app.get("/oauth/credentials")
     async def oauth_credentials():

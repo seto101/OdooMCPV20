@@ -86,6 +86,7 @@ Endpoints disponibles:
 - `POST /login` - Obtener JWT
 - `GET /.well-known/oauth-authorization-server` - **OAuth Discovery (RFC 8414)**
 - `GET /.well-known/oauth-protected-resource` - **Resource Discovery (RFC 9728)**
+- `POST /oauth/register` - **Dynamic Client Registration (RFC 7591)**
 - `GET /oauth/authorize` - **OAuth 2.0 Autorización** (para ChatGPT)
 - `POST /oauth/token` - **OAuth 2.0 Token Exchange** (para ChatGPT)
 - `GET /oauth/credentials` - Obtener credenciales OAuth para configuración
@@ -130,6 +131,10 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
   - ✅ **OAuth Discovery Endpoints** (RFC 8414 y RFC 9728):
     - ✅ `/.well-known/oauth-authorization-server`
     - ✅ `/.well-known/oauth-protected-resource`
+  - ✅ **Dynamic Client Registration** (RFC 7591):
+    - ✅ Endpoint `POST /oauth/register`
+    - ✅ Clientes públicos sin client_secret
+    - ✅ Registro automático de ChatGPT
 - ✅ Cliente Odoo mejorado
 - ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI

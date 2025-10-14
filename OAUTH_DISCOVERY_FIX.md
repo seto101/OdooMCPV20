@@ -1,15 +1,16 @@
-# ✅ OAuth Discovery Implementado - ChatGPT Listo
+# ✅ OAuth 2.0 con Dynamic Client Registration - ChatGPT Listo
 
-## 🎯 Problema Resuelto
+## 🎯 Problemas Resueltos
 
-ChatGPT mostraba el error: **"Error fetching OAuth configuration - MCP server does not implement OAuth"**
-
-### Causa
+### Problema 1: "Error fetching OAuth configuration"
 ChatGPT busca endpoints de descubrimiento OAuth estándar (`/.well-known/*`) para configurar automáticamente la autenticación, pero no los encontraba.
+
+### Problema 2: "Doesn't support RFC 7591 Dynamic Client Registration"
+ChatGPT requiere que los servidores OAuth soporten registro dinámico de clientes para evitar configuración manual previa.
 
 ## 🔧 Solución Implementada
 
-Se agregaron **2 endpoints de descubrimiento OAuth** según estándares RFC:
+Se implementó **OAuth 2.0 completo** con 3 componentes según estándares RFC:
 
 ### 1. Authorization Server Metadata (RFC 8414)
 ```
@@ -45,28 +46,61 @@ GET /.well-known/oauth-protected-resource
 }
 ```
 
+### 3. Dynamic Client Registration (RFC 7591)
+```
+POST /oauth/register
+Content-Type: application/json
+```
+
+**ChatGPT envía:**
+```json
+{
+  "client_name": "ChatGPT",
+  "redirect_uris": ["https://chatgpt.com/oauth/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none"
+}
+```
+
+**Servidor responde:**
+```json
+{
+  "client_id": "dynamic-AY1jZgxFfF6sgFosIoam0Q",
+  "client_name": "ChatGPT",
+  "redirect_uris": ["https://chatgpt.com/oauth/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none",
+  "client_id_issued_at": 1760485717
+}
+```
+
+**Nota:** No se devuelve `client_secret` porque `token_endpoint_auth_method` es `"none"` (cliente público)
+
 ## 🚀 Cómo Probar en ChatGPT
 
-### Opción 1: Descubrimiento Automático (Recomendado)
+### ✨ Registro Automático (Sin credenciales previas)
 
 1. **Abre ChatGPT** y ve a **Configuración → Conectores → Crear**
 
-2. **Configura:**
+2. **Configura solo estos campos:**
    - **Nombre**: `Odoo MCP Server`
    - **Descripción**: `Gestiona Odoo ERP - productos, clientes, ventas, inventario`
    - **MCP Server URL**: `https://b96e5c8e-997b-4417-8a99-9b08ccbf9331-00-2ldaiq5z9h8ph.picard.replit.dev/mcp/`
    - **Autenticación**: `OAuth`
-   
-3. **Credenciales OAuth:**
-   - **Client ID**: Obtén desde → `https://[servidor]/oauth/credentials`
-   - **Client Secret**: Obtén desde el mismo endpoint
-   - **Authorization URL**: *(déjalo vacío - auto-descubrimiento)*
-   - **Token URL**: *(déjalo vacío - auto-descubrimiento)*
-   - **Scopes**: `odoo:read odoo:write`
+
+3. **ChatGPT hará automáticamente:**
+   - ✅ Descubrir metadata desde `/.well-known/oauth-authorization-server`
+   - ✅ Registrarse dinámicamente en `/oauth/register`
+   - ✅ Obtener su propio `client_id` único
+   - ✅ Configurar el flujo OAuth sin `client_secret` (cliente público)
 
 4. **Marca** "I trust this application" y **guarda**
 
-ChatGPT automáticamente detectará los endpoints OAuth desde `/.well-known/oauth-authorization-server`
+5. **ChatGPT te redirigirá** al endpoint de autorización para dar consentimiento
+
+**¡No necesitas client_id ni client_secret previos!** ChatGPT se registra solo.
 
 ### Opción 2: Configuración Manual
 
@@ -98,19 +132,25 @@ curl https://b96e5c8e-997b-4417-8a99-9b08ccbf9331-00-2ldaiq5z9h8ph.picard.replit
 ### Cumplimiento de Estándares
 - ✅ RFC 8414 - OAuth 2.0 Authorization Server Metadata
 - ✅ RFC 9728 - OAuth 2.0 Protected Resource Metadata
+- ✅ RFC 7591 - OAuth 2.0 Dynamic Client Registration
 - ✅ RFC 6749 - OAuth 2.0 Authorization Framework
-- ✅ HTTP Basic Auth para credenciales (compatibilidad ChatGPT)
-- ✅ Form-encoded credentials como fallback
+- ✅ Clientes públicos (`token_endpoint_auth_method: "none"`)
+- ✅ HTTP Basic Auth + Form-encoded para clientes confidenciales
+- ✅ PKCE support (S256 y plain)
 
 ## 🎉 Estado
 
 **El servidor está listo y corriendo:**
 - ✅ Endpoints de descubrimiento OAuth funcionando
+- ✅ **Dynamic Client Registration** implementado (RFC 7591)
 - ✅ Auto-detección de URL pública desde Replit
+- ✅ Clientes públicos (sin client_secret) soportados
 - ✅ Compatible con ChatGPT, N8N y Claude Desktop
 - ✅ 7 herramientas MCP disponibles para Odoo
 
-**Ahora puedes intentar nuevamente en ChatGPT** - el error de "does not implement OAuth" debería estar resuelto.
+**Ahora puedes intentar nuevamente en ChatGPT** - ambos errores están resueltos:
+- ❌ "Error fetching OAuth configuration" → ✅ Resuelto
+- ❌ "Doesn't support RFC 7591 Dynamic Client Registration" → ✅ Resuelto
 
 ---
 

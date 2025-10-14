@@ -125,6 +125,7 @@ python -m mcp_server_odoo
 - `POST /login` - Obtener JWT token
 - `GET /.well-known/oauth-authorization-server` - OAuth Discovery (RFC 8414)
 - `GET /.well-known/oauth-protected-resource` - Resource Discovery (RFC 9728)
+- `POST /oauth/register` - Dynamic Client Registration (RFC 7591)
 - `GET /oauth/authorize` - OAuth authorization endpoint
 - `POST /oauth/token` - OAuth token endpoint
 - `GET /oauth/credentials` - Obtener credenciales OAuth para configuración
