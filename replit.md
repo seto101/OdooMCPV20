@@ -127,6 +127,9 @@ Para Claude Desktop, configurar `SERVER_MODE=stdio` en variables de entorno.
   - ✅ HTTP Basic Auth para credenciales de cliente (estándar ChatGPT)
   - ✅ Form-encoded credentials (RFC 6749)
   - ✅ Auto-detección de URL pública desde Replit
+  - ✅ **OAuth Discovery Endpoints** (RFC 8414 y RFC 9728):
+    - ✅ `/.well-known/oauth-authorization-server`
+    - ✅ `/.well-known/oauth-protected-resource`
 - ✅ Cliente Odoo mejorado
 - ✅ 7 herramientas MCP optimizadas con FastMCP y Pydantic
 - ✅ Servidor HTTP con FastAPI
