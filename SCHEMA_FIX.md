@@ -13,7 +13,7 @@ In context=('properties', 'domain'), array schema missing items.
 - Cuando definimos `domain: list` en Python, Pydantic/FastMCP genera `{"type": "array"}` sin la propiedad `items`
 - N8N valida estrictamente el schema JSON y rechaza arrays sin `items`
 
-**Solución aplicada:**
+**Solución aplicada (validación recursiva completa):**
 ```python
 domain: Annotated[list, Field(
     description="Search criteria as list of lists (Odoo domain)...",
@@ -27,7 +27,17 @@ domain: Annotated[list, Field(
                     {"type": "number"},
                     {"type": "boolean"},
                     {"type": "null"},
-                    {"type": "array"},
+                    {
+                        "type": "array",
+                        "items": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "number"},
+                                {"type": "boolean"},
+                                {"type": "null"}
+                            ]
+                        }
+                    },
                     {"type": "object"}
                 ]
             }
@@ -37,11 +47,12 @@ domain: Annotated[list, Field(
 ```
 
 **Qué hace esto:**
-- ✅ Define explícitamente el schema JSON completo con la propiedad `items`
-- ✅ El array externo tiene `items` que es un array
-- ✅ El array interno tiene `items` que acepta string, number, boolean, null, array u object
+- ✅ Define recursivamente todos los niveles del schema JSON con `items`
+- ✅ El array externo (domain) tiene `items` que es un array (cada filtro)
+- ✅ El array interno (filtro) tiene `items` con anyOf que incluye primitivos y arrays
+- ✅ El array anidado (valores como [1,2,3]) también tiene su `items` definido
 - ✅ Soporta filtros complejos de Odoo como `['id', 'in', [1,2,3]]` o `['category_id', 'child_of', [42]]`
-- ✅ Cumple con la especificación JSON Schema que N8N valida estrictamente
+- ✅ Cumple completamente con la validación recursiva estricta de N8N según JSON Schema spec
 
 ## 📋 Cómo Verificar la Corrección
 
@@ -183,7 +194,17 @@ curl -X POST https://[tu-dominio].repl.co/mcp/ \
         {"type": "number"},
         {"type": "boolean"},
         {"type": "null"},
-        {"type": "array"},
+        {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {"type": "string"},
+              {"type": "number"},
+              {"type": "boolean"},
+              {"type": "null"}
+            ]
+          }
+        },
         {"type": "object"}
       ]
     }
@@ -193,11 +214,13 @@ curl -X POST https://[tu-dominio].repl.co/mcp/ \
 ```
 
 **Verificaciones clave:**
-- ✅ `items` está definido (no undefined)
-- ✅ El array interno tiene su propio `items`
-- ✅ El `anyOf` incluye `array` y `object` para soportar filtros complejos de Odoo
+- ✅ `items` está definido en el array externo
+- ✅ `items` está definido en el array interno (filtros)
+- ✅ `items` está definido en el array anidado dentro del anyOf (valores)
+- ✅ Todos los arrays tienen `items` - validación recursiva completa
+- ✅ El `anyOf` incluye array con items y object para filtros complejos
 
-Si ves `"items": {...}` correctamente definido con los 6 tipos, el schema está correcto.
+Si ves la estructura recursiva completa con `items` en todos los niveles, el schema está correcto.
 
 ### Opción 3: Usar Endpoint REST Alternativo
 

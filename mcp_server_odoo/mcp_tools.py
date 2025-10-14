@@ -37,7 +37,17 @@ async def odoo_search_records(
                         {"type": "number"},
                         {"type": "boolean"},
                         {"type": "null"},
-                        {"type": "array"},
+                        {
+                            "type": "array",
+                            "items": {
+                                "anyOf": [
+                                    {"type": "string"},
+                                    {"type": "number"},
+                                    {"type": "boolean"},
+                                    {"type": "null"}
+                                ]
+                            }
+                        },
                         {"type": "object"}
                     ]
                 }
@@ -141,7 +151,17 @@ async def odoo_search_read_records(
                         {"type": "number"},
                         {"type": "boolean"},
                         {"type": "null"},
-                        {"type": "array"},
+                        {
+                            "type": "array",
+                            "items": {
+                                "anyOf": [
+                                    {"type": "string"},
+                                    {"type": "number"},
+                                    {"type": "boolean"},
+                                    {"type": "null"}
+                                ]
+                            }
+                        },
                         {"type": "object"}
                     ]
                 }
