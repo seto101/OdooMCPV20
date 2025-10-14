@@ -1,8 +1,6 @@
 """FastMCP tools definition for streamable HTTP transport."""
 
 from fastmcp import FastMCP
-from typing import Annotated
-from pydantic import Field
 import structlog
 
 from .config import get_settings
@@ -24,11 +22,11 @@ def get_odoo_client():
 
 @mcp.tool()
 async def odoo_search_records(
-    model: Annotated[str, Field(description="The Odoo model name (e.g., 'res.partner', 'sale.order')")],
-    domain: Annotated[list, Field(default=[], description="Search criteria as list of lists. Example: [['name', 'ilike', 'John']]", json_schema_extra={"type": "array", "items": {"type": "array", "items": {"type": "string"}}})] = [],
-    limit: Annotated[int, Field(default=10, description="Maximum records to return")] = 10,
-    offset: Annotated[int, Field(default=0, description="Number of records to skip")] = 0,
-    order: Annotated[str | None, Field(default=None, description="Sort order (e.g., 'name asc')")] = None
+    model: str,
+    domain: list = [],
+    limit: int = 10,
+    offset: int = 0,
+    order: str | None = None
 ) -> dict:
     """
     Search for records in any Odoo model using domain filters.
@@ -69,9 +67,9 @@ async def odoo_search_records(
 
 @mcp.tool()
 async def odoo_read_records(
-    model: Annotated[str, Field(description="The Odoo model name")],
-    ids: Annotated[list[int], Field(description="List of record IDs to read")],
-    fields: Annotated[list[str] | None, Field(default=None, description="Specific fields to retrieve")] = None
+    model: str,
+    ids: list[int],
+    fields: list[str] | None = None
 ) -> dict:
     """
     Read detailed information from Odoo records.
@@ -110,12 +108,12 @@ async def odoo_read_records(
 
 @mcp.tool()
 async def odoo_search_read_records(
-    model: Annotated[str, Field(description="The Odoo model name")],
-    domain: Annotated[list, Field(default=[], description="Search criteria as list of lists", json_schema_extra={"type": "array", "items": {"type": "array", "items": {"type": "string"}}})] = [],
-    fields: Annotated[list[str] | None, Field(default=None, description="Fields to retrieve")] = None,
-    limit: Annotated[int, Field(default=10, description="Maximum records")] = 10,
-    offset: Annotated[int, Field(default=0, description="Records to skip")] = 0,
-    order: Annotated[str | None, Field(default=None, description="Sort order")] = None
+    model: str,
+    domain: list = [],
+    fields: list[str] | None = None,
+    limit: int = 10,
+    offset: int = 0,
+    order: str | None = None
 ) -> dict:
     """
     Combined search and read operation - finds and retrieves records in one call.
@@ -153,8 +151,8 @@ async def odoo_search_read_records(
 
 @mcp.tool()
 async def odoo_create_record(
-    model: Annotated[str, Field(description="The Odoo model name")],
-    values: Annotated[dict, Field(description="Dictionary of field values for the new record")]
+    model: str,
+    values: dict
 ) -> dict:
     """
     Create a new record in Odoo.
@@ -190,9 +188,9 @@ async def odoo_create_record(
 
 @mcp.tool()
 async def odoo_update_record(
-    model: Annotated[str, Field(description="The Odoo model name")],
-    ids: Annotated[list[int], Field(description="List of record IDs to update")],
-    values: Annotated[dict, Field(description="Dictionary of field values to update")]
+    model: str,
+    ids: list[int],
+    values: dict
 ) -> dict:
     """
     Update existing records in Odoo.
@@ -227,8 +225,8 @@ async def odoo_update_record(
 
 @mcp.tool()
 async def odoo_delete_record(
-    model: Annotated[str, Field(description="The Odoo model name")],
-    ids: Annotated[list[int], Field(description="List of record IDs to delete")]
+    model: str,
+    ids: list[int]
 ) -> dict:
     """
     Delete records from Odoo (WARNING: This is permanent!).
@@ -262,7 +260,7 @@ async def odoo_delete_record(
 
 @mcp.tool()
 async def odoo_get_model_fields(
-    model: Annotated[str, Field(description="The Odoo model name to inspect")]
+    model: str
 ) -> dict:
     """
     Get detailed information about fields in an Odoo model.
