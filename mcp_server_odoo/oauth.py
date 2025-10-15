@@ -70,7 +70,7 @@ class OAuthManager:
         self,
         code: str,
         client_id: str,
-        client_secret: str,
+        client_secret: Optional[str],
         redirect_uri: str
     ) -> Dict[str, Any]:
         """Exchange authorization code for access token."""
@@ -164,7 +164,7 @@ class OAuthManager:
         self,
         refresh_token: str,
         client_id: str,
-        client_secret: str
+        client_secret: Optional[str]
     ) -> Dict[str, Any]:
         """Refresh access token using refresh token."""
         

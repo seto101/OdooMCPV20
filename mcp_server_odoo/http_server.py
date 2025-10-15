@@ -258,7 +258,7 @@ def create_app() -> FastAPI:
         try:
             if grant_type == "authorization_code":
                 # Exchange code for token
-                if not all([code, final_client_id, final_client_secret, redirect_uri]):
+                if not all([code, final_client_id, redirect_uri]):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Missing required parameters for authorization_code grant"
@@ -267,8 +267,23 @@ def create_app() -> FastAPI:
                 # Type assertions after validation
                 assert code is not None
                 assert final_client_id is not None
-                assert final_client_secret is not None
                 assert redirect_uri is not None
+                
+                # Obtener cliente para verificar si requiere secret
+                client = oauth_manager.get_client(final_client_id)
+                if not client:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid client_id"
+                    )
+                
+                # Validar client_secret solo para clientes confidenciales
+                if client.get("token_endpoint_auth_method") != "none":
+                    if not final_client_secret:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="client_secret required for confidential clients"
+                        )
                 
                 token_data = oauth_manager.exchange_code_for_token(
                     code=code,
@@ -282,7 +297,7 @@ def create_app() -> FastAPI:
                 
             elif grant_type == "refresh_token":
                 # Refresh token
-                if not all([refresh_token, final_client_id, final_client_secret]):
+                if not all([refresh_token, final_client_id]):
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Missing required parameters for refresh_token grant"
@@ -291,7 +306,22 @@ def create_app() -> FastAPI:
                 # Type assertions after validation
                 assert refresh_token is not None
                 assert final_client_id is not None
-                assert final_client_secret is not None
+                
+                # Obtener cliente para verificar si requiere secret
+                client = oauth_manager.get_client(final_client_id)
+                if not client:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid client_id"
+                    )
+                
+                # Validar client_secret solo para clientes confidenciales
+                if client.get("token_endpoint_auth_method") != "none":
+                    if not final_client_secret:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="client_secret required for confidential clients"
+                        )
                 
                 token_data = oauth_manager.refresh_access_token(
                     refresh_token=refresh_token,
