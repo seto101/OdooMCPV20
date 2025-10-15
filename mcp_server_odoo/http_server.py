@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, status, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response, RedirectResponse
+from fastapi.responses import JSONResponse, Response, RedirectResponse, HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -186,8 +186,7 @@ def create_app() -> FastAPI:
         """
         OAuth 2.0 authorization endpoint.
         
-        For ChatGPT and other OAuth clients.
-        This is a simplified flow - in production, show a consent screen.
+        Shows consent page for OAuth clients like ChatGPT.
         """
         logger.info(
             "oauth_authorize_request",
@@ -203,6 +202,87 @@ def create_app() -> FastAPI:
             )
         
         try:
+            # Obtener información del cliente
+            client = oauth_manager.get_client(client_id)
+            if not client:
+                raise ValueError("Invalid client_id")
+            
+            client_name = client.get("client_name", "Unknown Application")
+            requested_scope = scope or client.get("scope", "odoo:read odoo:write")
+            
+            # Mostrar página de consentimiento
+            consent_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Authorize Access</title>
+                <style>
+                    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+                           display: flex; justify-content: center; align-items: center; 
+                           min-height: 100vh; margin: 0; background: #f5f5f5; }}
+                    .container {{ background: white; padding: 2rem; border-radius: 8px; 
+                                 box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; }}
+                    h1 {{ margin: 0 0 1rem; color: #333; }}
+                    .client-name {{ color: #0066cc; font-weight: 600; }}
+                    .scopes {{ background: #f8f9fa; padding: 1rem; border-radius: 4px; margin: 1rem 0; }}
+                    .scope-item {{ margin: 0.5rem 0; }}
+                    button {{ width: 100%; padding: 0.75rem; border: none; border-radius: 4px; 
+                             font-size: 1rem; cursor: pointer; font-weight: 600; }}
+                    .authorize {{ background: #0066cc; color: white; margin-bottom: 0.5rem; }}
+                    .authorize:hover {{ background: #0052a3; }}
+                    .deny {{ background: #e0e0e0; color: #666; }}
+                    .deny:hover {{ background: #d0d0d0; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Authorize Access</h1>
+                    <p><span class="client-name">{client_name}</span> wants to access your Odoo data.</p>
+                    
+                    <div class="scopes">
+                        <strong>Permissions requested:</strong>
+                        <div class="scope-item">✓ Read Odoo data</div>
+                        <div class="scope-item">✓ Write Odoo data</div>
+                    </div>
+                    
+                    <form method="post" action="/oauth/authorize/approve">
+                        <input type="hidden" name="client_id" value="{client_id}">
+                        <input type="hidden" name="redirect_uri" value="{redirect_uri}">
+                        <input type="hidden" name="state" value="{state or ''}">
+                        <input type="hidden" name="scope" value="{requested_scope}">
+                        <button type="submit" class="authorize">Authorize</button>
+                    </form>
+                    
+                    <button class="deny" onclick="window.location.href='{redirect_uri}?error=access_denied&state={state or ''}'">
+                        Deny
+                    </button>
+                </div>
+            </body>
+            </html>
+            """
+            
+            return HTMLResponse(content=consent_html)
+            
+        except ValueError as e:
+            logger.error("oauth_authorize_error", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+    
+    @app.post("/oauth/authorize/approve")
+    async def oauth_authorize_approve(
+        client_id: str = Form(...),
+        redirect_uri: str = Form(...),
+        state: Optional[str] = Form(None),
+        scope: Optional[str] = Form(None)
+    ):
+        """
+        Handle OAuth consent approval.
+        """
+        try:
             # Generate authorization code
             code = oauth_manager.generate_authorization_code(
                 client_id=client_id,
@@ -216,12 +296,12 @@ def create_app() -> FastAPI:
             if state:
                 redirect_url += f"&state={state}"
             
-            logger.info("oauth_authorize_success", redirect_uri=redirect_uri)
+            logger.info("oauth_consent_approved", client_id=client_id)
             
-            return RedirectResponse(url=redirect_url)
+            return RedirectResponse(url=redirect_url, status_code=303)
             
         except ValueError as e:
-            logger.error("oauth_authorize_error", error=str(e))
+            logger.error("oauth_approve_error", error=str(e))
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(e)
