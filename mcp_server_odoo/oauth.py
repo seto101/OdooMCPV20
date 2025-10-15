@@ -3,6 +3,8 @@
 import secrets
 import hashlib
 import time
+import json
+from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 import structlog
@@ -13,6 +15,35 @@ logger = structlog.get_logger()
 oauth_codes: Dict[str, dict] = {}
 oauth_tokens: Dict[str, dict] = {}
 oauth_clients: Dict[str, dict] = {}  # Dynamic client registration
+
+# Persistencia en archivo JSON
+OAUTH_CLIENTS_FILE = Path("oauth_clients.json")
+
+def load_oauth_clients():
+    """Cargar clientes OAuth desde archivo JSON."""
+    global oauth_clients
+    if OAUTH_CLIENTS_FILE.exists():
+        try:
+            with open(OAUTH_CLIENTS_FILE, 'r') as f:
+                oauth_clients = json.load(f)
+            logger.info("oauth_clients_loaded", count=len(oauth_clients))
+        except Exception as e:
+            logger.error("oauth_clients_load_error", error=str(e))
+            oauth_clients = {}
+    else:
+        oauth_clients = {}
+
+def save_oauth_clients():
+    """Guardar clientes OAuth en archivo JSON."""
+    try:
+        with open(OAUTH_CLIENTS_FILE, 'w') as f:
+            json.dump(oauth_clients, f, indent=2)
+        logger.debug("oauth_clients_saved", count=len(oauth_clients))
+    except Exception as e:
+        logger.error("oauth_clients_save_error", error=str(e))
+
+# Cargar clientes al iniciar
+load_oauth_clients()
 
 
 class OAuthManager:
@@ -269,6 +300,9 @@ class OAuthManager:
         }
         
         oauth_clients[client_id] = client_data
+        
+        # Guardar en disco para persistencia
+        save_oauth_clients()
         
         logger.info(
             "client_registered",
