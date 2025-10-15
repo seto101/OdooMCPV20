@@ -1,0 +1,97 @@
+Called tool
+Odoo MCP
+odoo_search_records
+Request
+{
+model: 
+'res.partner'
+, 
+domain: 
+, 
+limit: 
+1
+}
+Response
+{
+type: 
+'http_error'
+, 
+code: 
+401
+, 
+message: 
+'401: Client error '401 Unauthorized' for url 'https://b96e5c8e-997b-4417-8a99-9b08ccbf9331-00-2ldaiq5z9h8ph.picard.replit.dev/mcp/' For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401'
+, 
+is_error: 
+true
+}
+
+Tienes un 401 Unauthorized al golpear el endpoint del Odoo MCP. En cristiano: el servidor está vivo, pero rechaza nuestras credenciales/sesión. No es un “no hay internet” ni un 500 del servidor; es autenticación.
+
+Qué significa y por qué pasa
+
+Sesión expirada: el token/cookie que usábamos caducó.
+
+Credenciales inválidas o rotas: cambió el usuario/contraseña, el API key, o el db de Odoo.
+
+URL/tenant cambiado: el link del MCP (Replit/Picard) regeneró URL o cambió el proyecto.
+
+Scope/permisos: el token ya no tiene permiso para los modelos que consultamos (p. ej. stock.quant).
+
+IP allowlist / CORS / proxy: el MCP está detrás de reglas que ahora bloquean la llamada.
+
+Los intentos recientes devolvieron 401 repetidamente al usar distintas funciones:
+
+odoo_search_read_records (por ejemplo para stock.quant y stock.location)
+
+odoo_search_records (p. ej. res.partner)
+
+Incluso consultas simples con limit=1 también caen en 401
+
+Cómo lo solucionas rápido (checklist operativo)
+
+Regenerar sesión/tokens
+
+Re-loguear el conector MCP y volver a autorizar.
+
+Si usas variables (API key/token), regenera y reinyéctalas.
+
+Verificar URL del MCP
+
+Confirma que seguimos usando la URL vigente del servicio (los entornos tipo Replit a veces cambian subdominio).
+
+Credenciales de Odoo
+
+Revisa host, db, username, password/API key que el MCP usa por debajo.
+
+Confirma que el usuario de Odoo no fue deshabilitado o no cambió de permisos.
+
+Permisos/Reglas
+
+El usuario/tokén necesita acceso read a stock.quant, stock.location, product.product, etc.
+
+Si hay reglas de registro (record rules) nuevas, podrían bloquear búsquedas amplias.
+
+Seguridad de red
+
+Si hay IP allowlist, añade la IP pública actual del MCP.
+
+Si hay CORS/reverse proxy, permite el origen desde donde hacemos la llamada.
+
+Logs
+
+Mira logs del MCP y del servidor Odoo (acceso y errores) para ver el motivo exacto del rechazo.
+
+Prueba mínima
+
+Desde el MCP, ejecuta una consulta mínima conocida (p. ej. res.users con tu propio usuario) para aislar si es credencial o permisos sobre modelos.
+
+Qué puedo hacer yo ahora mismo
+
+Si me habilitas nuevamente el acceso (token/credenciales vigentes o URL correcta), reintento de inmediato y te saco:
+
+Inventario completo de BPLA/Stock Plaza en tiempo real desde stock.quant (con product_id, location_id, quantity)
+
+Exportado a Excel con nombre y códigos internos, y totales.
+
+Mientras tanto, ya te dejé un snapshot de “Stock Plaza” basado en tu archivo para que no te detengas. En cuanto restablezcamos la auth del MCP, lo reemplazo por el corte real de Odoo.

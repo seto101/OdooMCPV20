@@ -65,5 +65,6 @@ Thumbs.db
 # MCP specific
 *.db
 
-# OAuth persistence (contiene client_secrets)
+# OAuth persistence (contiene client_secrets y tokens)
 oauth_clients.json
+oauth_tokens.json

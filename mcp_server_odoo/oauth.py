@@ -16,8 +16,9 @@ oauth_codes: Dict[str, dict] = {}
 oauth_tokens: Dict[str, dict] = {}
 oauth_clients: Dict[str, dict] = {}  # Dynamic client registration
 
-# Persistencia en archivo JSON
+# Persistencia en archivos JSON
 OAUTH_CLIENTS_FILE = Path("oauth_clients.json")
+OAUTH_TOKENS_FILE = Path("oauth_tokens.json")
 
 def load_oauth_clients():
     """Cargar clientes OAuth desde archivo JSON."""
@@ -42,8 +43,39 @@ def save_oauth_clients():
     except Exception as e:
         logger.error("oauth_clients_save_error", error=str(e))
 
-# Cargar clientes al iniciar
+def load_oauth_tokens():
+    """Cargar tokens OAuth desde archivo JSON."""
+    global oauth_tokens
+    if OAUTH_TOKENS_FILE.exists():
+        try:
+            with open(OAUTH_TOKENS_FILE, 'r') as f:
+                oauth_tokens = json.load(f)
+            # Limpiar tokens expirados al cargar
+            current_time = time.time()
+            expired = [token for token, data in oauth_tokens.items() 
+                      if current_time > data.get("expires_at", 0)]
+            for token in expired:
+                del oauth_tokens[token]
+            logger.info("oauth_tokens_loaded", total=len(oauth_tokens) + len(expired), 
+                       active=len(oauth_tokens), expired=len(expired))
+        except Exception as e:
+            logger.error("oauth_tokens_load_error", error=str(e))
+            oauth_tokens = {}
+    else:
+        oauth_tokens = {}
+
+def save_oauth_tokens():
+    """Guardar tokens OAuth en archivo JSON."""
+    try:
+        with open(OAUTH_TOKENS_FILE, 'w') as f:
+            json.dump(oauth_tokens, f, indent=2)
+        logger.debug("oauth_tokens_saved", count=len(oauth_tokens))
+    except Exception as e:
+        logger.error("oauth_tokens_save_error", error=str(e))
+
+# Cargar clientes y tokens al iniciar
 load_oauth_clients()
+load_oauth_tokens()
 
 
 class OAuthManager:
@@ -158,6 +190,9 @@ class OAuthManager:
         # Eliminar código usado (one-time use)
         del oauth_codes[code]
         
+        # Persistir tokens
+        save_oauth_tokens()
+        
         logger.info(
             "access_token_generated",
             token=access_token[:10] + "...",
@@ -185,6 +220,7 @@ class OAuthManager:
         # Verificar expiración
         if time.time() > token_data["expires_at"]:
             del oauth_tokens[access_token]
+            save_oauth_tokens()  # Persistir eliminación
             logger.warning("expired_access_token", token=access_token[:10] + "...")
             return False
         
@@ -245,6 +281,9 @@ class OAuthManager:
         
         # Eliminar token anterior
         del oauth_tokens[old_token]
+        
+        # Persistir cambios
+        save_oauth_tokens()
         
         logger.info("access_token_refreshed", token=new_access_token[:10] + "...")
         
