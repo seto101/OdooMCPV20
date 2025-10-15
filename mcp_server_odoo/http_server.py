@@ -83,6 +83,46 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    # OAuth middleware for MCP endpoints
+    class OAuthMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request: Request, call_next):
+            # Solo validar OAuth para rutas MCP
+            if request.url.path.startswith("/mcp"):
+                auth_header = request.headers.get("Authorization")
+                
+                if not auth_header:
+                    logger.warning("mcp_no_auth_header", path=request.url.path)
+                    return JSONResponse(
+                        status_code=401,
+                        content={"error": "unauthorized", "detail": "Missing Authorization header"}
+                    )
+                
+                # Extraer Bearer token
+                parts = auth_header.split()
+                if len(parts) != 2 or parts[0].lower() != "bearer":
+                    logger.warning("mcp_invalid_auth_format", auth_header=auth_header[:20])
+                    return JSONResponse(
+                        status_code=401,
+                        content={"error": "unauthorized", "detail": "Invalid Authorization header format"}
+                    )
+                
+                token = parts[1]
+                
+                # Validar token OAuth
+                if not oauth_manager.validate_token(token):
+                    logger.warning("mcp_invalid_token", token=token[:10] + "...")
+                    return JSONResponse(
+                        status_code=401,
+                        content={"error": "unauthorized", "detail": "Invalid or expired access token"}
+                    )
+                
+                logger.debug("mcp_auth_success", token=token[:10] + "...")
+            
+            response = await call_next(request)
+            return response
+    
+    app.add_middleware(OAuthMiddleware)
+    
     auth_manager = AuthManager(settings, oauth_manager=oauth_manager)
     cache_manager = CacheManager(ttl=settings.cache_ttl)
     odoo_client = OdooClient(settings, cache_manager)
