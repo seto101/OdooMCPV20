@@ -1,0 +1,67 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Development
+.env
+.env.*
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# OAuth persistence (contiene secrets)
+oauth_clients.json
+oauth_tokens.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation drafts
+*.draft.md
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Replit specific
+.replit
+replit.nix
+.config/
+.cache/
+.upm/
+.pythonlibs/
+
+# Deployment docs (optional, incluye si quieres)
+# EASYPANEL_DEPLOYMENT.md
+# N8N_SETUP.md
+# CHATGPT_OAUTH_SETUP.md
